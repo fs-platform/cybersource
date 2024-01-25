@@ -90,8 +90,10 @@ class Cybersource
     }
 
     /**
-     * 批准支付
+     * 订单支付
      * @return array
+     * @throws \CyberSource\Authentication\Core\AuthException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceBaseException
      * @throws \Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource
      */
     public function purchase() : array
@@ -137,8 +139,14 @@ class Cybersource
 
         $data = $this->purchaseService->purchase($config,$params);
 
-        return cybersource_return_success("success",[
-            'response' => $data
+        if ($data) {
+            return cybersource_return_success("success",[
+                'result' => true
+            ]);
+        }
+
+        return cybersource_return_error("error",[
+            'result' => false
         ]);
     }
 
