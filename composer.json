@@ -1,0 +1,47 @@
+{
+  "name": "smbear/cybersource",
+  "description": "fs cybersource支付",
+  "keywords": ["Laravel","Cybersource"],
+  "authors": [
+    {
+      "name": "smile",
+      "email": "smile.yi@feisu.com"
+    }
+  ],
+  "homepage": "https://github.com/fs-platform/cybersource",
+  "require": {
+    "php": "^7.3",
+    "laravel/framework": "^8.0",
+    "cybersource/rest-client-php": "0.0.40"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0",
+    "orchestra/testbench": "^6.0",
+    "phpstan/phpstan": "^0.12"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Smbear\\Cybersource\\": "src/"
+    },
+    "files": [
+      "helper/function.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Smbear\\Cybersource\\Tests\\": "tests/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "Smbear\\Cybersource\\Providers\\CybersourceServiceProvider"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit -c ./phpunit.xml --colors=always",
+    "analysis": "vendor/bin/phpstan analyse"
+  }
+}
