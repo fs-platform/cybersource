@@ -8,7 +8,7 @@ use Smbear\Cybersource\Cybersource;
 class CybersourceServiceProvider extends ServiceProvider
 {
     /**
-     * Bootstrap the application services.
+     * 发布资源
      *
      * @return void
      */
@@ -20,7 +20,7 @@ class CybersourceServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register the application services.
+     * 注册服务
      *
      * @return void
      */

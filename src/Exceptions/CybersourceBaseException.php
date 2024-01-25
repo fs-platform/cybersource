@@ -4,6 +4,7 @@ namespace Smbear\Cybersource\Exceptions;
 
 use \Exception;
 
-class BaseException extends Exception {
+class CybersourceBaseException extends Exception
+{
 
 }

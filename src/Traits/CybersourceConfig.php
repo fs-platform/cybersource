@@ -3,7 +3,7 @@
 namespace Smbear\Cybersource\Traits;
 
 use Smbear\Cybersource\Enums\CybersourceEnums;
-use Smbear\Cybersource\Exceptions\CybersourceConfigException;
+use Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource;
 
 trait CybersourceConfig
 {
@@ -35,7 +35,7 @@ trait CybersourceConfig
      *
      * @param array $dependencies
      * @return array 配置文件
-     * @throws CybersourceConfigException
+     * @throws CybersourceConfigExceptionCybersource
      * @Author: smile
      * @Date: 2021/6/30
      * @Time: 17:58
@@ -47,7 +47,7 @@ trait CybersourceConfig
 
             array_walk($dependencies,function ($item) use ($environment) {
                 if (empty(config(CybersourceEnums::CYBERSOURCE.'.'.$environment.'.'.$item))){
-                    throw new CybersourceConfigException(CybersourceEnums::CYBERSOURCE. $environment .'.'.$item.' 参数为空');
+                    throw new CybersourceConfigExceptionCybersource(CybersourceEnums::CYBERSOURCE. $environment .'.'.$item.' 参数为空');
                 }
             });
 

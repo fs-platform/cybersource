@@ -13,11 +13,10 @@ use CyberSource\Model\Ptsv2paymentsidcapturesOrderInformationShipTo;
 use CyberSource\Model\Ptsv2paymentsOrderInformation;
 use CyberSource\Model\Ptsv2paymentsOrderInformationAmountDetails;
 use CyberSource\Model\Ptsv2paymentsOrderInformationBillTo;
-use CyberSource\Model\PtsV2PaymentsPost201Response;
 use CyberSource\Model\Ptsv2paymentsTokenInformation;
-use CyberSource\Model\RefreshPaymentStatusRequest;
+use Illuminate\Support\Facades\Log;
+use Smbear\Cybersource\Exceptions\CybersourceBaseException;
 use Smbear\Cybersource\Traits\CybersourceClient;
-
 
 class CybersourcePurchaseService
 {
@@ -71,25 +70,17 @@ class CybersourcePurchaseService
             'orderInformation'           => $orderInformation
         ];
     }
-    
-    public function buildStatusRequestParams(array $params) : array 
-    {
-        $clientReferenceInformation = new Ptsv2paymentsClientReferenceInformation([
-            'code' =>  $params['reference'] ?? ''
-        ]);
-
-        return [
-            'clientReferenceInformation' => $clientReferenceInformation,
-        ];
-    }
 
     /**
      * 订单支付
+     * @param array $config
+     * @param array $params
+     * @return bool
      * @throws \CyberSource\Authentication\Core\AuthException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceBaseException
      */
-    public function purchase(array $config,array $params)
+    public function purchase(array $config,array $params) : bool
     {
-
         $request = new CreatePaymentRequest($this->buildPaymentRequestParams($params));
 
         $paymentsApi = new PaymentsApi($this->client($config));
@@ -105,40 +96,32 @@ class CybersourcePurchaseService
                 if ($status == "AUTHORIZED_PENDING_REVIEW") {
                     $id = $response->getId();
 
-                    $this->capture($config,$params,$id);
+                    return $this->capture($config,$params,$id);
                 }
             }
 
-//            $this->capture($config,$params,"a123");
-
-            //7060815035566020904953
-
-            dd($response);
+            return true;
 
         } catch (\Exception $exception) {
-            dd($exception);
+            Log::channel(config('cybersource.channel') ?: 'cybersource')
+                ->emergency('支付异常 response 数据异常:'. $exception->getMessage());
+
+            report($exception);
+
+            throw new CybersourceBaseException($exception->getMessage());
         }
-    }
-
-    public function get(array $config,array $params,string $id) {
-        $request = new RefreshPaymentStatusRequest($this->buildStatusRequestParams($params));
-
-        $paymentsApi = new PaymentsApi($this->client($config));
-
-        try {
-            $response = $paymentsApi->refreshPaymentStatus($id, $request);
-        } catch (\Exception $exception) {
-            dd($exception);
-        }
-
-
-        dd($response);
     }
 
     /**
+     * 捕获订单
+     * @param array $config
+     * @param array $params
+     * @param string $id
+     * @return bool
      * @throws \CyberSource\Authentication\Core\AuthException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceBaseException
      */
-    public function capture(array $config, array $params, string $id)
+    public function capture(array $config, array $params, string $id): bool
     {
         $request = new CapturePaymentRequest($this->buildCaptureRequestParams($params));
 
@@ -147,9 +130,24 @@ class CybersourcePurchaseService
         try {
             $response = $captureApi->capturePayment($request, $id);
 
-            dump($response);
+            if (!empty($response) && is_array($response)) {
+                $response = current($response);
+
+                $status = $response->getStatus();
+
+                if ($status == "PENDING") {
+                    return true;
+                }
+            }
+
+            return false;
         } catch (\Exception $exception) {
-            dd($exception);
+            Log::channel(config('cybersource.channel') ?: 'cybersource')
+                ->emergency('捕获异常 response 数据异常:'. $exception->getMessage());
+
+            report($exception);
+
+            throw new CybersourceBaseException($exception->getMessage());
         }
     }
 }

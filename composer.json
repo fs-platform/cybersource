@@ -12,7 +12,8 @@
   "require": {
     "php": "^7.3",
     "laravel/framework": "^8.0",
-    "cybersource/rest-client-php": "0.0.40"
+    "cybersource/rest-client-php": "0.0.40",
+    "ext-json": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.0",

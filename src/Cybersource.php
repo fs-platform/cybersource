@@ -2,8 +2,8 @@
 
 namespace Smbear\Cybersource;
 
-use Smbear\Cybersource\Exceptions\CybersourceConfigException;
-use Smbear\Cybersource\Exceptions\CybersourceParamsException;
+use Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource;
+use Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource;
 use Smbear\Cybersource\Services\CybersourceJwtService;
 use Smbear\Cybersource\Services\CybersourcePurchaseService;
 use Smbear\Cybersource\Traits\CybersourceConfig;
@@ -92,7 +92,7 @@ class Cybersource
     /**
      * 批准支付
      * @return array
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceConfigException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource
      */
     public function purchase() : array
     {
@@ -143,12 +143,12 @@ class Cybersource
     }
 
     /**
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource
      */
     public function setToken(string $token) : Cybersource
     {
         if (empty($token)) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
 
         $this->token = $token;
@@ -160,12 +160,12 @@ class Cybersource
      * 设置订单编号
      * @param string $reference
      * @return $this
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource
      */
     public function setReference(string $reference): Cybersource
     {
         if (empty($reference)) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
 
         $this->reference = $reference;
@@ -177,19 +177,19 @@ class Cybersource
      * 设置订单金额
      * @param array $amount
      * @return \Smbear\Cybersource\Cybersource
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource
      */
     public function setAmount(array $amount): Cybersource
     {
         if (empty($amount)) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
 
         //判断订单金额
         $amountValue = intval($amount['amount'] ?? 0);
 
         if ($amountValue <= 0) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
         
         $this->amount = [
@@ -204,12 +204,12 @@ class Cybersource
      * 设置账单地址
      * @param array $billing
      * @return $this
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource
      */
     public function setBilling(array $billing) : Cybersource
     {
         if (empty($billing)) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
 
         $this->billing = [
@@ -233,12 +233,12 @@ class Cybersource
      * 设置运输地址
      * @param array $shipping
      * @return $this
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource
      */
     public function setShipping(array $shipping) : Cybersource
     {
         if (empty($shipping)) {
-            throw new CybersourceParamsException(__FUNCTION__.self::PARAMS_EXCEPTION);
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
         }
 
         $this->shipping = [
@@ -261,7 +261,7 @@ class Cybersource
     /**
      * 核实方法是否被调用
      * @param array $methods
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceConfigException
+     * @throws \Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource
      */
     public function checkMethods($methods = [])
     {
@@ -273,7 +273,7 @@ class Cybersource
             }
 
             if (!isset($this->$attribute)  || empty($this->$attribute)) {
-                throw new CybersourceConfigException($item['method'].' 异常，请先调用');
+                throw new CybersourceConfigExceptionCybersource($item['method'].' 异常，请先调用');
             }
         });
     }

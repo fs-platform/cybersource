@@ -5,7 +5,7 @@ namespace Smbear\Cybersource\Services;
 use CyberSource\Api\MicroformIntegrationApi;
 use CyberSource\Model\GenerateCaptureContextRequest;
 use Illuminate\Support\Facades\Log;
-use Smbear\Cybersource\Exceptions\BaseException;
+use Smbear\Cybersource\Exceptions\CybersourceBaseException;
 use Smbear\Cybersource\Traits\CybersourceClient;
 
 class CybersourceJwtService {
@@ -57,7 +57,7 @@ class CybersourceJwtService {
 
             report($exception);
 
-            throw new BaseException($exception->getMessage());
+            throw new CybersourceBaseException($exception->getMessage());
         }
     }
 }
