@@ -41,7 +41,12 @@ class CybersourceJwtService {
         try {
             $integrationApi = new MicroformIntegrationApi($this->client($config));
 
-            $response = $integrationApi->generateCaptureContext($this->buildData($config));
+            $buildParams = $this->buildData($config);
+
+            Log::channel(config('cybersource.channel') ?: 'cybersource')
+                ->info('jwt 初始化 client请求参数',$buildParams);
+
+            $response = $integrationApi->generateCaptureContext($buildParams);
 
             if (empty($response) || !is_array($response) || count($response) == 0) {
                 Log::channel(config('cybersource.channel') ?: 'cybersource')
