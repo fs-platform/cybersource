@@ -15,7 +15,6 @@ use CyberSource\Model\Ptsv2paymentsOrderInformationAmountDetails;
 use CyberSource\Model\Ptsv2paymentsOrderInformationBillTo;
 use CyberSource\Model\Ptsv2paymentsTokenInformation;
 use Illuminate\Support\Facades\Log;
-use Smbear\Cybersource\Exceptions\CybersourceBaseException;
 use Smbear\Cybersource\Traits\CybersourceClient;
 
 class CybersourcePurchaseService
@@ -29,6 +28,9 @@ class CybersourcePurchaseService
      */
     public function buildPaymentRequestParams(array $params) : array
     {
+        Log::channel(config('cybersource.channel') ?: 'cybersource')
+            ->info('cybersource client 支付 请求参数',$params);
+
         $orderInformation = new Ptsv2paymentsOrderInformation([
             'amountDetails' => new Ptsv2paymentsOrderInformationAmountDetails($params['amount'] ?? []),
             'billTo'        => new Ptsv2paymentsOrderInformationBillTo($params['billing'] ?? []),
@@ -77,7 +79,7 @@ class CybersourcePurchaseService
      * @param array $params
      * @return bool
      * @throws \CyberSource\Authentication\Core\AuthException
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceBaseException
+     * @throws \CyberSource\ApiException
      */
     public function purchase(array $config,array $params) : bool
     {
@@ -85,31 +87,21 @@ class CybersourcePurchaseService
 
         $paymentsApi = new PaymentsApi($this->client($config));
 
-        try {
-            $response = $paymentsApi->createPayment($request);
+        $response = $paymentsApi->createPayment($request);
 
-            if (!empty($response) && is_array($response)) {
-                $response = current($response);
+        if (!empty($response) && is_array($response)) {
+            $response = current($response);
 
-                $status = $response->getStatus();
+            $status = $response->getStatus();
 
-                if ($status == "AUTHORIZED_PENDING_REVIEW") {
-                    $id = $response->getId();
+            if ($status == "AUTHORIZED_PENDING_REVIEW") {
+                $id = $response->getId();
 
-                    return $this->capture($config,$params,$id);
-                }
+                return $this->capture($config,$params,$id);
             }
-
-            return true;
-
-        } catch (\Exception $exception) {
-            Log::channel(config('cybersource.channel') ?: 'cybersource')
-                ->emergency('支付异常 response 数据异常:'. $exception->getMessage());
-
-            report($exception);
-
-            throw new CybersourceBaseException($exception->getMessage());
         }
+
+        return true;
     }
 
     /**
@@ -119,7 +111,7 @@ class CybersourcePurchaseService
      * @param string $id
      * @return bool
      * @throws \CyberSource\Authentication\Core\AuthException
-     * @throws \Smbear\Cybersource\Exceptions\CybersourceBaseException
+     * @throws \CyberSource\ApiException
      */
     public function capture(array $config, array $params, string $id): bool
     {
@@ -127,27 +119,18 @@ class CybersourcePurchaseService
 
         $captureApi = new CaptureApi($this->client($config));
 
-        try {
-            $response = $captureApi->capturePayment($request, $id);
+        $response = $captureApi->capturePayment($request, $id);
 
-            if (!empty($response) && is_array($response)) {
-                $response = current($response);
+        if (!empty($response) && is_array($response)) {
+            $response = current($response);
 
-                $status = $response->getStatus();
+            $status = $response->getStatus();
 
-                if ($status == "PENDING") {
-                    return true;
-                }
+            if ($status == "PENDING") {
+                return true;
             }
-
-            return false;
-        } catch (\Exception $exception) {
-            Log::channel(config('cybersource.channel') ?: 'cybersource')
-                ->emergency('捕获异常 response 数据异常:'. $exception->getMessage());
-
-            report($exception);
-
-            throw new CybersourceBaseException($exception->getMessage());
         }
+
+        return false;
     }
 }

@@ -5,7 +5,6 @@ namespace Smbear\Cybersource\Services;
 use CyberSource\Api\MicroformIntegrationApi;
 use CyberSource\Model\GenerateCaptureContextRequest;
 use Illuminate\Support\Facades\Log;
-use Smbear\Cybersource\Exceptions\CybersourceBaseException;
 use Smbear\Cybersource\Traits\CybersourceClient;
 
 class CybersourceJwtService {
@@ -30,7 +29,7 @@ class CybersourceJwtService {
         ];
 
         Log::channel(config('cybersource.channel') ?: 'cybersource')
-            ->info('jwt 初始化 client请求参数',$data);
+            ->info('cybersource client jwt初始化 请求参数',$data);
 
         return new GenerateCaptureContextRequest($data);
     }
@@ -41,26 +40,17 @@ class CybersourceJwtService {
      */
     public function jwt(array $config) : string
     {
-        try {
-            $integrationApi = new MicroformIntegrationApi($this->client($config));
+        $integrationApi = new MicroformIntegrationApi($this->client($config));
 
-            $response = $integrationApi->generateCaptureContext($this->buildData($config));
+        $response = $integrationApi->generateCaptureContext($this->buildData($config));
 
-            if (empty($response) || !is_array($response) || count($response) == 0) {
-                Log::channel(config('cybersource.channel') ?: 'cybersource')
-                    ->emergency('jwt 初始化异常 response 数据异常:'. json_encode($response));
-
-                return "";
-            }
-
-            return current($response);
-        } catch (\Exception $exception) {
+        if (empty($response) || !is_array($response) || count($response) == 0) {
             Log::channel(config('cybersource.channel') ?: 'cybersource')
-                ->emergency('jwt 初始化异常 response 数据异常:'. $exception->getMessage());
+                ->emergency('cybersource client jwt初始化异常 response响应数据异常:'. json_encode($response));
 
-            report($exception);
-
-            throw new CybersourceBaseException($exception->getMessage());
+            return "";
         }
+
+        return current($response);
     }
 }
