@@ -29,6 +29,9 @@ class CybersourceJwtService {
             'allowedCardNetworks' => $config['allowed_card_networks']
         ];
 
+        Log::channel(config('cybersource.channel') ?: 'cybersource')
+            ->info('jwt 初始化 client请求参数',$data);
+
         return new GenerateCaptureContextRequest($data);
     }
 
@@ -41,12 +44,7 @@ class CybersourceJwtService {
         try {
             $integrationApi = new MicroformIntegrationApi($this->client($config));
 
-            $buildParams = $this->buildData($config);
-
-            Log::channel(config('cybersource.channel') ?: 'cybersource')
-                ->info('jwt 初始化 client请求参数',$buildParams);
-
-            $response = $integrationApi->generateCaptureContext($buildParams);
+            $response = $integrationApi->generateCaptureContext($this->buildData($config));
 
             if (empty($response) || !is_array($response) || count($response) == 0) {
                 Log::channel(config('cybersource.channel') ?: 'cybersource')
