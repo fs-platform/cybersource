@@ -13,9 +13,23 @@ trait CybersourceConfig
     public $config;
 
     /**
+     * @var string 语种
+     */
+    public $locale = 'en';
+
+    /**
      * @var string 是生产模型还是沙盒模型
      */
     public $environment = 'sandbox';
+
+    /**
+     * 设置当前语种
+     * @param string $locale
+     */
+    public function setLocale(string $locale = '')
+    {
+        $this->locale = $locale ?: 'en';
+    }
 
     /**
      * @Notes:设置 environment

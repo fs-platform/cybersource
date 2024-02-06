@@ -4,6 +4,7 @@ namespace Smbear\Cybersource;
 
 use CyberSource\ApiException;
 use Illuminate\Support\Facades\Log;
+use Psy\Util\Str;
 use Smbear\Cybersource\Exceptions\CybersourceBaseException;
 use Smbear\Cybersource\Exceptions\CybersourceConfigExceptionCybersource;
 use Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource;
@@ -36,6 +37,11 @@ class Cybersource
     private $shipping;
 
     /**
+     * @var int 订单id
+     */
+    private $orderId;
+
+    /**
      * @var string 交易单号
      */
     private $reference;
@@ -59,6 +65,8 @@ class Cybersource
     {
         $this->setEnvironment();
 
+        $this->setLocale();
+
         $this->jwtService = new CybersourceJwtService();
 
         $this->purchaseService = new CybersourcePurchaseService();
@@ -67,11 +75,17 @@ class Cybersource
     /**
      * 初始化jwt
      * @return array
-     * @throws \Exception
      */
     public function initJwt(): array
     {
         try {
+            $this->checkMethods([
+                [
+                    'method'    => 'setOrderId',
+                    'attribute' => 'orderId'
+                ]
+            ]);
+            
             $config = $this->getConfig([
                 'point',
                 'merchant_id',
@@ -82,33 +96,9 @@ class Cybersource
                 'target_origins'
             ]);
 
-            $jwt = $this->jwtService->jwt($config);
-
-            if (empty($jwt)) {
-                return cybersource_return_error("exception",[]);
-            }
-
-            return cybersource_return_success("success",[
-                'jwt' => $jwt
-            ]);
+            return $this->jwtService->jwt($config,$this->orderId);
         }catch (\Exception $exception) {
-            if ($exception instanceof CybersourceBaseException) {
-                Log::channel(config('cybersource.channel') ?: 'cybersource')
-                    ->emergency('cybersource client jwt初始化异常 异常原因:' . $exception->getMessage());
-            }  elseif ($exception instanceof ApiException) {
-                $responseBody = $exception->getResponseBody();
-
-                if (!empty($responseBody) && is_object($responseBody)) {
-                    $context = get_object_vars($responseBody);
-
-                    Log::channel(config('cybersource.channel') ?: 'cybersource')
-                        ->emergency('cybersource client jwt初始化异常 response 数据异常:'. $exception->getMessage(),$context);
-                }
-            }
-
-            report($exception);
-
-            throw $exception;
+            return CybersourceBaseException::exceptionHadle($exception, $this->locale ?? 'en', $this->orderId ?? 0,'jwt初始化');
         }
     }
 
@@ -121,6 +111,10 @@ class Cybersource
     {
         try {
             $this->checkMethods([
+                [
+                    'method'    => 'setOrderId',
+                    'attribute' => 'orderId'
+                ],
                 [
                     'method' => 'setToken',
                     'attribute' => 'token'
@@ -159,35 +153,9 @@ class Cybersource
                 'shipping'  => $this->shipping
             ];
 
-            $data = $this->purchaseService->purchase($config,$params);
-
-            if ($data) {
-                return cybersource_return_success("success",[
-                    'result' => true
-                ]);
-            }
-
-            return cybersource_return_error("error",[
-                'result' => false
-            ]);
+            return $this->purchaseService->purchase($config,$params,$this->locale,$this->orderId);
         }catch (\Exception $exception) {
-            if ($exception instanceof CybersourceBaseException) {
-                Log::channel(config('cybersource.channel') ?: 'cybersource')
-                    ->emergency('cybersource client 支付异常 异常原因:' . $exception->getMessage());
-            }  elseif ($exception instanceof ApiException) {
-                $responseBody = $exception->getResponseBody();
-
-                if (!empty($responseBody) && is_object($responseBody)) {
-                    $context = get_object_vars($responseBody);
-
-                    Log::channel(config('cybersource.channel') ?: 'cybersource')
-                        ->emergency('cybersource client 支付异常 response 数据异常:'. $exception->getMessage(),$context);
-                }
-            }
-
-            report($exception);
-
-            throw $exception;
+            return CybersourceBaseException::exceptionHadle($exception,$this->locale ?? 'en',$this->orderId ?? '','支付');
         }
     }
 
@@ -202,6 +170,23 @@ class Cybersource
         }
 
         $this->token = $token;
+
+        return $this;
+    }
+
+    /**
+     * 设置订单id
+     * @param string $orderId
+     * @return $this
+     * @throws CybersourceParamsExceptionCybersource
+     */
+    public function setOrderId(string $orderId) : Cybersource
+    {
+        if (empty($orderId) || $orderId <= 0) {
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
+        }
+
+        $this->orderId = $orderId;
 
         return $this;
     }

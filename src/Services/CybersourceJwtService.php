@@ -18,9 +18,10 @@ class CybersourceJwtService {
     /**
      * 建造jwt初始化所需数据
      * @param array $config
-     * @return \CyberSource\Model\GenerateCaptureContextRequest
+     * @param int $orderId
+     * @return GenerateCaptureContextRequest
      */
-    public function buildData(array $config) : GenerateCaptureContextRequest
+    public function buildData(array $config,string $orderId) : GenerateCaptureContextRequest
     {
         $data = [
             'targetOrigins'       => $config['target_origins'],
@@ -29,28 +30,36 @@ class CybersourceJwtService {
         ];
 
         Log::channel(config('cybersource.channel') ?: 'cybersource')
-            ->info('cybersource client jwt初始化 请求参数',$data);
+            ->info('订单id:'.($orderId?? '').' cybersource client jwt初始化 请求参数:',$data);
 
         return new GenerateCaptureContextRequest($data);
     }
 
     /**
      * 初始化jwk
-     * @throws \Exception
+     * @param array $config
+     * @param int $orderId
+     * @return array
+     * @throws \CyberSource\ApiException
+     * @throws \CyberSource\Authentication\Core\AuthException
      */
-    public function jwt(array $config) : string
+    public function jwt(array $config,string $orderId) : array
     {
         $integrationApi = new MicroformIntegrationApi($this->client($config));
 
-        $response = $integrationApi->generateCaptureContext($this->buildData($config));
+        $response = $integrationApi->generateCaptureContext($this->buildData($config,$orderId));
+
+        Log::channel(config('cybersource.channel') ?: 'cybersource')
+            ->info('订单id:'.($orderId?? '').' cybersource client jwt初始化 响应数据:',$response);
 
         if (empty($response) || !is_array($response) || count($response) == 0) {
-            Log::channel(config('cybersource.channel') ?: 'cybersource')
-                ->emergency('cybersource client jwt初始化异常 response响应数据异常:'. json_encode($response));
 
-            return "";
+
+            return cybersource_return_error("error",[]);
         }
 
-        return current($response);
+        return cybersource_return_success("success",[
+            'jwt' => current($response)
+        ]);
     }
 }
