@@ -113,7 +113,7 @@ class CybersourcePurchaseService
      * @throws ApiException
      * @throws \CyberSource\Authentication\Core\AuthException
      */
-    public function purchase(array $config,array $params,string $local,int $orderId) : array
+    public function purchase(array $config,array $params,string $locale,int $orderId) : array
     {
         $request = new CreatePaymentRequest($this->buildPaymentRequestParams($params,$orderId));
 
