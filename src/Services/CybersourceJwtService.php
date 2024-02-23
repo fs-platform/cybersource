@@ -53,8 +53,6 @@ class CybersourceJwtService {
             ->info('订单id:'.($orderId?? '').' cybersource client jwt初始化 响应数据:',$response);
 
         if (empty($response) || !is_array($response) || count($response) == 0) {
-
-
             return cybersource_return_error("error",[]);
         }
 

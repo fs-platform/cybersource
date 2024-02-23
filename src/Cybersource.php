@@ -11,6 +11,7 @@ use Smbear\Cybersource\Exceptions\CybersourceParamsExceptionCybersource;
 use Smbear\Cybersource\Services\CybersourceJwtService;
 use Smbear\Cybersource\Services\CybersourcePurchaseService;
 use Smbear\Cybersource\Traits\CybersourceConfig;
+use Smbear\WebPowerEmail\Channels\EmailChannel;
 
 class Cybersource
 {
@@ -20,6 +21,11 @@ class Cybersource
      * @var string token
      */
     private $token;
+
+    /**
+     * @var string $type
+     */
+    private $type;
 
     /**
      * @var array 账单地址
@@ -45,6 +51,11 @@ class Cybersource
      * @var string 交易单号
      */
     private $reference;
+
+    /**
+     * @var string ip地址
+     */
+    private $ipAddress;
 
     /**
      * @var CybersourceJwtService jwtService
@@ -83,6 +94,10 @@ class Cybersource
                 [
                     'method'    => 'setOrderId',
                     'attribute' => 'orderId'
+                ],
+                [
+                    'method'    => 'setType',
+                    'attribute' => 'type'
                 ]
             ]);
             
@@ -94,7 +109,7 @@ class Cybersource
                 'secret',
                 'authentication_type',
                 'target_origins'
-            ]);
+            ],$this->type);
 
             return $this->jwtService->jwt($config,$this->orderId);
         }catch (\Exception $exception) {
@@ -135,6 +150,14 @@ class Cybersource
                     'method' => 'setShipping',
                     'attribute' => 'shipping'
                 ],
+                [
+                    'method'    => 'setType',
+                    'attribute' => 'type'
+                ],
+                [
+                    'method'    => 'setIpAddress',
+                    'attribute' => 'ipAddress'
+                ]
             ]);
 
             $config = $this->getConfig([
@@ -143,14 +166,15 @@ class Cybersource
                 'encryption_type',
                 'key',
                 'secret'
-            ]);
+            ],$this->type);
 
             $params = [
                 'token'     => $this->token,
                 'reference' => $this->reference,
                 'amount'    => $this->amount,
                 'billing'   => $this->billing,
-                'shipping'  => $this->shipping
+                'shipping'  => $this->shipping,
+                'ipAddress' => $this->ipAddress
             ];
 
             return $this->purchaseService->purchase($config,$params,$this->locale,$this->orderId);
@@ -192,6 +216,40 @@ class Cybersource
     }
 
     /**
+     * 设置ip地址
+     * @param string $ipAddress
+     * @return $this
+     * @throws CybersourceParamsExceptionCybersource
+     */
+    public function setIpAddress(string $ipAddress) : Cybersource
+    {
+        if (empty($ipAddress)) {
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
+        }
+        
+        $this->ipAddress = $ipAddress;
+
+        return $this;
+    }
+
+    /**
+     * 设置类型
+     * @param string $type
+     * @return $this
+     * @throws CybersourceParamsExceptionCybersource
+     */
+    public function setType(string $type) : Cybersource 
+    {
+        if (empty($type)) {
+            throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);
+        }
+
+        $this->type = $type;
+
+        return $this;
+    }
+
+    /**
      * 设置订单编号
      * @param string $reference
      * @return $this
@@ -221,7 +279,7 @@ class Cybersource
         }
 
         //判断订单金额
-        $amountValue = intval($amount['amount'] ?? 0);
+        $amountValue = floatval($amount['amount'] ?? 0);
 
         if ($amountValue <= 0) {
             throw new CybersourceParamsExceptionCybersource(__FUNCTION__.self::PARAMS_EXCEPTION);

@@ -8,6 +8,7 @@ use CyberSource\ApiException;
 use CyberSource\Model\CapturePaymentRequest;
 use CyberSource\Model\CreatePaymentRequest;
 use CyberSource\Model\Ptsv2paymentsClientReferenceInformation;
+use CyberSource\Model\Ptsv2paymentsDeviceInformation;
 use CyberSource\Model\Ptsv2paymentsidcapturesOrderInformation;
 use CyberSource\Model\Ptsv2paymentsidcapturesOrderInformationAmountDetails;
 use CyberSource\Model\Ptsv2paymentsidcapturesOrderInformationShipTo;
@@ -74,11 +75,16 @@ class CybersourcePurchaseService
            'capture' => true
         ]);
 
+        $deviceInformation = new Ptsv2paymentsDeviceInformation([
+            'ipAddress' => $params['ipAddress'] ?? ''
+        ]);
+
         return [
             'clientReferenceInformation' => $clientReferenceInformation,
             'orderInformation'           => $orderInformation,
             'tokenInformation'           => $tokenInformation,
-            'processingInformation'      => $processingInformation
+            'processingInformation'      => $processingInformation,
+            'deviceInformation'          => $deviceInformation
         ];
     }
 

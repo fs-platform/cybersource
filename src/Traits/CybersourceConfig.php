@@ -48,24 +48,25 @@ trait CybersourceConfig
      * @Notes:获取到指定模型的配置数据
      *
      * @param array $dependencies
+     * @param string $type
      * @return array 配置文件
      * @throws CybersourceConfigExceptionCybersource
      * @Author: smile
      * @Date: 2021/6/30
      * @Time: 17:58
      */
-    public function getConfig(array $dependencies) : array
+    public function getConfig(array $dependencies,string $type) : array
     {
         if (empty($this->config)) {
             $environment = $this->environment;
 
-            array_walk($dependencies,function ($item) use ($environment) {
-                if (empty(config(CybersourceEnums::CYBERSOURCE.'.'.$environment.'.'.$item))){
+            array_walk($dependencies,function ($item) use ($environment,$type) {
+                if (empty(config(CybersourceEnums::CYBERSOURCE.'.'.$environment.'.'.$type.'.'.$item))){
                     throw new CybersourceConfigExceptionCybersource(CybersourceEnums::CYBERSOURCE. $environment .'.'.$item.' 参数为空');
                 }
             });
 
-            $this->config = config('cybersource.' . $environment);
+            $this->config = config('cybersource.' . $environment.'.'.$type);
         }
 
         return $this->config;
